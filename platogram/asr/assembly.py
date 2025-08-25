@@ -1,9 +1,15 @@
 import os
 from pathlib import Path
-import assemblyai as aai  # type: ignore
 import subprocess
 from tempfile import TemporaryDirectory
 from platogram.types import SpeechEvent
+
+try:
+    import assemblyai as aai  # type: ignore
+except ImportError:
+    raise ImportError(
+        "AssemblyAI is not installed. Please install it with: pip install 'platogram[asr]'"
+    )
 
 
 def convert_to_mp3(file: Path, output_dir: Path) -> Path:

@@ -85,7 +85,12 @@ def process_url(
     asr = None
     if assemblyai_api_key:
         print("Debug: Initializing ASR with AssemblyAI")
-        asr = plato.asr.get_model("assembly-ai/best", assemblyai_api_key)
+        try:
+            asr = plato.asr.get_model("assembly-ai/best", assemblyai_api_key)
+        except ImportError as e:
+            print(f"Warning: {e}")
+            print("Continuing without ASR support...")
+            asr = None
     
     # Extract transcript
     print("Debug: Starting transcript extraction")
@@ -97,6 +102,11 @@ def process_url(
     except ValueError as e:
         if "No subtitles found and no ASR model provided" in str(e):
             print("Error: Audio file detected but no ASR key provided")
+            print("Please provide --assemblyai-api-key or install AssemblyAI with: pip install 'platogram[asr]'")
+            raise
+        elif "ASR model required for audio files" in str(e):
+            print("Error: Audio file detected but no ASR support available")
+            print("Please provide --assemblyai-api-key or install AssemblyAI with: pip install 'platogram[asr]'")
             raise
         raise
     
@@ -126,7 +136,7 @@ def process_url(
             return "\n".join(f"{i+1}. [{format_time(event.time_ms)}] {event.text}" for i, event in enumerate(transcript))
     
     # Process full content if no specific flags
-    content = plato.index(transcript, llm, lang=lang)
+    content = plato.index(transcript, llm, lang=lang, chunk_size=args.chunk_size)
     
     if extract_images:
         print("Debug: Extracting images")
@@ -209,6 +219,11 @@ def main():
         "--inline-references", 
         action="store_true", 
         help="Render references inline"
+    )
+    parser.add_argument(
+        "--chunk-size",
+        type=int,
+        help="Override automatic chunk size for large transcripts (advanced users)"
     )
     
     args = parser.parse_args()

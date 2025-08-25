@@ -1,14 +1,18 @@
 # Platogram: Transform Audio into Knowledge
+*Plato on drugs*
 
 Platogram is an open-source project that converts audio content into structured, readable essays with embedded references. It's designed to help researchers, content creators, and knowledge workers extract valuable insights from audio sources like lectures, podcasts, and interviews.
 
 ## Key Features
 
 - Convert audio from YouTube, local files, etc into well-structured text.
+- **Process local transcript files** without external dependencies.
+- **Handle large audio files** - optimized for hour+ recordings without token limits.
 - Create passages, summaries, and titles from audio content.
 - Maintain references to the original transcript and timestamps.
 - Create a searchable knowledge base from processed audio.
 - Use the generated content for further AI-powered analysis and content creation.
+- **Optional AssemblyAI integration** - use only what you need.
 
 ## Getting Started
 
@@ -25,6 +29,17 @@ Platogram is an open-source project that converts audio content into structured,
 
 ### Installation
 
+#### Basic Installation (transcript files only)
+```bash
+pip install .
+```
+
+#### Full Installation (with audio file support)
+```bash
+pip install .[asr]
+```
+
+Or from git:
 ```bash
 pip install git+https://github.com/code-anyway/platogram.git
 ```
@@ -33,7 +48,8 @@ pip install git+https://github.com/code-anyway/platogram.git
 
 ### Command Line Interface (CLI)
 
-Obtain your API keys for Anthropic and Aseembly AI. Provide a URL to audio source or local file name.
+#### Process YouTube/Web Content
+Obtain your API keys for Anthropic and AssemblyAI. Provide a URL to audio source.
 
 ```bash
 plato \
@@ -41,6 +57,28 @@ plato \
 --assemblyai-api-key "YOUR_ASSEMBLYAI_API_KEY" \
 https://www.youtube.com/shorts/XsLK3tPy9SI
 ```
+
+#### Process Local Files (No ASR needed)
+```bash
+# Process transcript files
+plato transcript.txt --title --abstract
+
+# Process markdown documents
+plato document.md --chapters --passages
+
+# Multiple formats supported:
+# [0] Text with millisecond timestamps
+# 00:00 Text with time format  
+# Plain text without timestamps
+# Markdown files with headers
+```
+
+#### Process Audio Files (Requires ASR)
+```bash
+plato audio.mp3 --assemblyai-api-key "YOUR_ASSEMBLYAI_API_KEY"
+```
+
+See [LOCAL_FILES.md](LOCAL_FILES.md) for detailed format specifications and examples.
 
 ### Python SDK
 

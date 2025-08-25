@@ -1,0 +1,8 @@
+[0] Welcome to this sample transcript.
+[3000] This demonstrates the millisecond timestamp format.
+[6000] Each line starts with a timestamp in square brackets.
+[9000] The timestamp represents milliseconds from the start.
+[12000] This allows for precise timing of spoken words.
+[15000] You can process this file without requiring AssemblyAI.
+[18000] This makes the library more flexible and accessible.
+[21000] Thank you for using Platogram.

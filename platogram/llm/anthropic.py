@@ -40,17 +40,70 @@ class Model:
             raise ValueError(f"Unknown model: {model}")
 
         self.client = anthropic.Client(api_key=key)
+        
+        # Define token limits per model
+        self._limits = self._get_model_limits(self.model)
+    
+    def _get_model_limits(self, model: str) -> dict[str, int]:
+        """Get token limits for specific Anthropic model"""
+        if model in ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229"]:
+            return {
+                "max_input_tokens": 200_000,
+                "max_output_tokens": 32_000,
+                "safe_input_tokens": 190_000,  # Leave buffer for system prompts
+                "safe_output_tokens": 8_000,   # Conservative for long responses
+            }
+        elif model in ["claude-3-haiku-20240307", "claude-3-sonnet-20240229"]:
+            return {
+                "max_input_tokens": 200_000,
+                "max_output_tokens": 2_000,    # Lower output limit
+                "safe_input_tokens": 190_000,
+                "safe_output_tokens": 1_500,
+            }
+        else:
+            # Conservative defaults for unknown models
+            return {
+                "max_input_tokens": 100_000,
+                "max_output_tokens": 2_000,
+                "safe_input_tokens": 90_000,
+                "safe_output_tokens": 1_500,
+            }
+
+    def get_optimal_chunk_size(self) -> int:
+        """Get optimal chunk size for this model considering input limits"""
+        # Use 70% of safe input tokens to allow room for system prompts and examples
+        return int(self._limits["safe_input_tokens"] * 0.7)
+    
+    def get_max_output_tokens(self) -> int:
+        """Get maximum output tokens for this model"""
+        return self._limits["safe_output_tokens"]
+    
+    def validate_input_size(self, text: str) -> tuple[bool, int, str]:
+        """Validate if input text fits within model limits"""
+        token_count = self.count_tokens(text)
+        max_tokens = self._limits["safe_input_tokens"]
+        
+        if token_count <= max_tokens:
+            return True, token_count, f"Input size OK: {token_count:,} tokens"
+        else:
+            return False, token_count, f"Input too large: {token_count:,} tokens (max: {max_tokens:,})"
 
     def count_tokens(self, text: str) -> int:
         """Count tokens for a given text using Anthropic's API"""
-        result = self.client.messages.count_tokens(
-            model=self.model,
-            messages=[{
-                "role": "user", 
-                "content": text
-            }]
-        )
-        return result.input_tokens
+        try:
+            result = self.client.messages.count_tokens(
+                model=self.model,
+                messages=[{
+                    "role": "user", 
+                    "content": text
+                }]
+            )
+            return result.input_tokens
+        except Exception as e:
+            # Fallback: rough estimation (4 chars per token)
+            import logging
+            logging.warning(f"Token counting failed, using estimation: {e}")
+            return len(text) // 4
 
     def prompt_model(
         self,
@@ -61,6 +114,9 @@ class Model:
         system: str | None = None,
         tools: list[dict] | None = None,
     ) -> str | dict[str, str] | Generator[str, None, None]:
+        # Enforce model output limits
+        max_tokens = min(max_tokens, self._limits["safe_output_tokens"])
+        
         kwargs: dict[str, Any] = {}
 
         if tools:

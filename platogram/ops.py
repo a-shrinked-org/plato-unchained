@@ -151,9 +151,18 @@ def get_paragraphs(
     examples = {
         str(example["input"]): list(example["output"]) for example in rewrite_examples[lang]
     }
+    
+    # Use model-specific output limits if available
+    if hasattr(llm, 'get_max_output_tokens'):
+        model_max_tokens = llm.get_max_output_tokens()
+        max_tokens = min(max_tokens, model_max_tokens)
+        print(f"Debug: Using output limit: {max_tokens} tokens")
+    
     tail = ""
     paragraphs = []
     chunks = chunk_text(text, chunk_size, llm.count_tokens)
+    print(f"Debug: Processing {len(chunks)} chunks for transcript")
+    
     with tqdm(total=len(chunks), initial=0) as pbar:
         pbar.update(0)
         for i, chunk in enumerate(chunks):
@@ -164,18 +173,23 @@ def get_paragraphs(
                 {marker - base_marker: text for marker, text in parse(chunk).items()}
             )
 
-            # limit the number of output tokens to chunk size
-            for paragraph in llm.get_paragraphs(
-                content, examples, max_tokens=max_tokens, temperature=temperature, lang=lang,
-            ):
-                # we are not parsing again, because sometimes model returns paragraphs without trailing marker
-                paragraphs.append(
-                    re.sub(
-                        r"【(\d+)】",
-                        lambda match: f"【{int(match.group(1)) + base_marker}】",
-                        paragraph,
+            # Use model-appropriate output token limit
+            try:
+                for paragraph in llm.get_paragraphs(
+                    content, examples, max_tokens=max_tokens, temperature=temperature, lang=lang,
+                ):
+                    # we are not parsing again, because sometimes model returns paragraphs without trailing marker
+                    paragraphs.append(
+                        re.sub(
+                            r"【(\d+)】",
+                            lambda match: f"【{int(match.group(1)) + base_marker}】",
+                            paragraph,
+                        )
                     )
-                )
+            except Exception as e:
+                print(f"Warning: Error processing chunk {i+1}/{len(chunks)}: {e}")
+                # Continue with the next chunk rather than failing completely
+                continue
 
             if i < len(chunks) - 1 and paragraphs:
                 paragraphs.pop()
@@ -211,11 +225,27 @@ def index(
     llm: LanguageModel,
     max_tokens: int = 4096,
     temperature: float = 0.5,
-    chunk_size: int = 2048,
+    chunk_size: int | None = None,
     lang: str | None = None,
 ) -> Content:
     """Index content with retries for metadata generation"""
     text = render({i: event.text for i, event in enumerate(transcript)})
+    
+    # Use dynamic chunk size based on model capabilities
+    if chunk_size is None:
+        if hasattr(llm, 'get_optimal_chunk_size'):
+            chunk_size = llm.get_optimal_chunk_size()
+            print(f"Debug: Using optimal chunk size: {chunk_size:,} tokens")
+        else:
+            chunk_size = 2048  # Fallback for non-Anthropic models
+    
+    # Validate input size for large transcripts
+    if hasattr(llm, 'validate_input_size'):
+        is_valid, token_count, message = llm.validate_input_size(text)
+        print(f"Debug: {message}")
+        if not is_valid:
+            print(f"Debug: Large transcript detected, using chunking")
+    
     paragraphs = get_paragraphs(text, llm, max_tokens, temperature, chunk_size, lang=lang)
 
     # Retry logic for title and summary

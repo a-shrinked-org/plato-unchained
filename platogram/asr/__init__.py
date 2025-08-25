@@ -9,8 +9,12 @@ class ASRModel(Protocol):
 
 def get_model(full_model_name: str, key: str | None = None) -> ASRModel:
     if full_model_name.startswith("assembly-ai/"):
-        from .assembly import Model
-
-        return Model(full_model_name.split("/")[-1], key)
+        try:
+            from .assembly import Model
+            return Model(full_model_name.split("/")[-1], key)
+        except ImportError:
+            raise ImportError(
+                "AssemblyAI is not installed. Please install it with: pip install 'platogram[asr]'"
+            )
     else:
         raise ValueError(f"Unsupported ASR model: {full_model_name}")

@@ -1,0 +1,8 @@
+00:00 Welcome to this sample transcript with time format.
+00:03 This uses minutes and seconds instead of milliseconds.
+00:06 Each line starts with MM:SS timestamp.
+00:09 The system will convert this to milliseconds automatically.
+00:12 This format is more human-readable.
+00:15 You can still process this without AssemblyAI.
+00:18 Multiple formats are supported for flexibility.
+00:21 Thank you for using Platogram.
