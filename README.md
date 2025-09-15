@@ -52,7 +52,7 @@ pip install git+https://github.com/code-anyway/platogram.git
 Obtain your API keys for Anthropic and AssemblyAI. Provide a URL to audio source.
 
 ```bash
-plato \
+plato-unchained \
 --anthropic-api-key "YOUR_ANTHROPIC_API_KEY" \
 --assemblyai-api-key "YOUR_ASSEMBLYAI_API_KEY" \
 https://www.youtube.com/shorts/XsLK3tPy9SI
@@ -61,21 +61,31 @@ https://www.youtube.com/shorts/XsLK3tPy9SI
 #### Process Local Files (No ASR needed)
 ```bash
 # Process transcript files
-plato transcript.txt --title --abstract
+plato-unchained transcript.txt --title --abstract
 
 # Process markdown documents
-plato document.md --chapters --passages
+plato-unchained document.md --chapters --passages
 
 # Multiple formats supported:
 # [0] Text with millisecond timestamps
-# 00:00 Text with time format  
+# 00:00 Text with time format
 # Plain text without timestamps
 # Markdown files with headers
 ```
 
 #### Process Audio Files (Requires ASR)
 ```bash
-plato audio.mp3 --assemblyai-api-key "YOUR_ASSEMBLYAI_API_KEY"
+plato-unchained audio.mp3 --assemblyai-api-key "YOUR_ASSEMBLYAI_API_KEY"
+```
+
+#### Process via Inputs File
+You can also pass a text file with many inputs (one per line; lines starting with `#` are ignored):
+
+```bash
+plato-unchained \
+--anthropic-api-key "YOUR_ANTHROPIC_API_KEY" \
+--assemblyai-api-key "YOUR_ASSEMBLYAI_API_KEY" \
+--inputs-file inputs.txt
 ```
 
 See [LOCAL_FILES.md](LOCAL_FILES.md) for detailed format specifications and examples.
@@ -94,7 +104,7 @@ asr = plato.asr.get_model("assembly-ai/best", "YOUR_ASSEMBLYAI_API_KEY")  # Opti
 url = "https://www.youtube.com/shorts/XsLK3tPy9SI"
 transcript = plato.extract_transcript(url, asr)
 content = plato.index(transcript, llm)
-  
+
 # Access generated content
 print(content.title)
 print(content.summary)
