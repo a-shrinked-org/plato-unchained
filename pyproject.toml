@@ -7,7 +7,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [tool.poetry.scripts]
-plato-unchained = "platogram.cli:main"
+plato = "platogram.cli:main"
 
 [tool.poetry.dependencies]
 python = ">=3.10"
