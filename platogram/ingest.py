@@ -301,9 +301,16 @@ def extract_transcript(url: str, asr_model: ASRModel | None = None, lang: str | 
     # Handle URLs
     with TemporaryDirectory() as temp_dir:
         temp_dir_path = Path(temp_dir)
-        
+
         if url.lower().startswith("https://api.waffly"):
             speech_events = parse_waffly(download_file(url, temp_dir_path))
+        elif url.lower().endswith(('.json', '.txt', '.md')):
+            # Handle text file URLs - download and parse as transcript
+            try:
+                downloaded_file = download_file(url, temp_dir_path)
+                speech_events = parse_local_transcript_file(str(downloaded_file))
+            except Exception as e:
+                raise ValueError(f"Failed to process text file URL {url}: {e}")
         elif asr_model is not None:
             file = download_audio(url, temp_dir_path)
             speech_events = asr_model.transcribe(file, lang=lang)
