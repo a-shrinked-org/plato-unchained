@@ -338,15 +338,20 @@ Sigue estos pasos para transformar los <passages> en un diccionario de capítulo
             temperature=temperature,
         )
 
+        # Handle both dict format and direct list format
+        if isinstance(chapters, dict) and "entities" in chapters:
+            chapter_list = chapters["entities"]
+        elif isinstance(chapters, list):
+            chapter_list = chapters
+        else:
+            raise AssertionError(f"Expected LLM to return dict with entities or list, got {chapters}")
+
         assert isinstance(
-            chapters, dict
-        ), f"Expected LLM to return dict with chapters, got {chapters}"
-        assert isinstance(
-            chapters["entities"], list
-        ), f"Expected LLM to return list of chapters, got {chapters['entities']}"
+            chapter_list, list
+        ), f"Expected LLM to return list of chapters, got {chapter_list}"
         return {
             int(re.findall(r"\d+", chapter["marker"])[0]): chapter["title"].strip()  # type: ignore
-            for chapter in chapters["entities"]
+            for chapter in chapter_list
         }
 
     def get_paragraphs(
@@ -408,7 +413,8 @@ Siga estos pasos para reescribir el <transcript> y mantener cada <marker>:
 
         # This will effectively cache the entire prefix with examples.
         # https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching#can-i-use-prompt-caching-at-the-same-time-as-other-betas
-        example_messages[-1].cache = True
+        if example_messages:  # Add safeguard
+            example_messages[-1].cache = True
 
         paragraphs = self.prompt_model(
             max_tokens=max_tokens,
