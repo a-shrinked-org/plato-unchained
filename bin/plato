@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /opt/plato/bin/python -m platogram.cli "$@"
