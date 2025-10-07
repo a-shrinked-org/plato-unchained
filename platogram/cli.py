@@ -137,7 +137,8 @@ def process_url(
     
     # Process full content if no specific flags
     content = plato.index(transcript, llm, lang=lang, chunk_size=args.chunk_size)
-    
+    content.origin = url_or_file
+
     if extract_images:
         print("Debug: Extracting images")
         images_dir = library.home / make_filesystem_safe(url_or_file)
