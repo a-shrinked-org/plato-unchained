@@ -6,6 +6,7 @@ authors = ["Code Anway <platogram@codeanyway.com>"]
 license = "Apache-2.0"
 readme = "README.md"
 
+# Console script entry point for plato CLI
 [tool.poetry.scripts]
 plato = "platogram.cli:main"
 
