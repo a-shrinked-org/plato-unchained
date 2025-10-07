@@ -6,9 +6,10 @@ authors = ["Code Anway <platogram@codeanyway.com>"]
 license = "Apache-2.0"
 readme = "README.md"
 
-# Console script entry point for plato CLI - DISABLED due to Poetry quoting bug
-# [tool.poetry.scripts]
-# plato = "platogram.cli:main"
+# Console script entry point for plato CLI
+[tool.poetry.scripts]
+plato = "platogram.cli:main"
+plato-install-wrapper = "platogram.install_wrapper:install_plato_wrapper"
 
 [tool.poetry.dependencies]
 python = ">=3.10"
