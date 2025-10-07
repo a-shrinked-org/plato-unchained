@@ -66,14 +66,7 @@ def process_url(
     lang: str | None = None,
 ) -> Content | str:  # Adjusted return type to allow str
     """Process a URL or file."""
-    print("=== Debug: Process URL Configuration ===")
-    print(f"URL: {url_or_file}")
-    print(f"Model: {model_type}")
-    print(f"Project ID: {os.getenv('GOOGLE_CLOUD_PROJECT')}")
-    print(f"Credentials: {os.getenv('GOOGLE_APPLICATION_CREDENTIALS')}")
-    print(f"Language: {lang}")
-    print("===================================")
-    
+
     # Configure model first to fail fast if credentials are missing
     if model_type == "gemini":
         if not os.getenv("GOOGLE_CLOUD_PROJECT") or not os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
@@ -84,16 +77,12 @@ def process_url(
     # Initialize ASR if needed
     asr = None
     if assemblyai_api_key:
-        print("Debug: Initializing ASR with AssemblyAI")
         try:
             asr = plato.asr.get_model("assembly-ai/best", assemblyai_api_key)
-        except ImportError as e:
-            print(f"Warning: {e}")
-            print("Continuing without ASR support...")
+        except ImportError:
             asr = None
     
     # Extract transcript
-    print("Debug: Starting transcript extraction")
     try:
         if asr:
             transcript = plato.extract_transcript(url_or_file, asr)
@@ -111,7 +100,6 @@ def process_url(
         raise
     
     # Initialize LLM only after successful transcript extraction
-    print(f"Debug: Initializing LLM model: {model_type}")
     llm = plato.llm.get_model(
         f"{model_type}/{'gemini-2.0-flash-001' if model_type == 'gemini' else 'claude-3-5-sonnet'}", 
         anthropic_api_key if model_type == "anthropic" else None
@@ -140,7 +128,6 @@ def process_url(
     content.origin = url_or_file
 
     if extract_images:
-        print("Debug: Extracting images")
         images_dir = library.home / make_filesystem_safe(url_or_file)
         images_dir.mkdir(exist_ok=True)
         timestamps_ms = [event.time_ms for event in content.transcript]
